@@ -60,7 +60,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 			std::string recordStr = fs.getRecord();
 			const char *record = recordStr.c_str();
 			void *key = record + attrByteOffset;
-			insertEntry(key,rid);
+			insertEntry(key,scanRid);
 		}
 	}
 	catch(EndOfFileException e)
