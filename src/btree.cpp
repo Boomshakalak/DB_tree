@@ -36,8 +36,20 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	idxStr<<relationName<<'.'<< attrByteOffset;
 	std::string indexName = idxStr.str();
 	outIndexName = indexName;
-	if ( File::exists(indexName) ) file = BlobFile::open(indexName);
-	else file = BlobFile::create(indexName);
+	if ( File::exists(indexName) ) file = &BlobFile::open(indexName);
+	else 
+		{
+			file = &BlobFile::create(indexName);
+			file->allocatePage(headerPageNum);
+			file->allocatePage(rootPageNum);
+			IndexMetaInfo meta;
+			meta.relationName = relationName;
+			meta.attrByteOffset = attrByteOffset;
+			meta.attrType = attrType;
+			meta.rootPageNum =rootPageNum;
+			Page metapage = *reinterpret_cast<Page*>(&meta);
+			BlobFile::writePage(headerPageNum, metapage);
+		}
 	FileScan fs(relationName,bufMgrIn);
 	try
 	{
@@ -72,7 +84,9 @@ BTreeIndex::~BTreeIndex()
 
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) 
 {
-	int val = *((int*)key);
+	int val = *(static_cast<int*>key);
+	RIDKeyPair<int> element ;
+	element.set(rid, val);
 }
 
 // -----------------------------------------------------------------------------
