@@ -40,15 +40,14 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	else 
 		{
 			file = &BlobFile::create(indexName);
-			file->allocatePage(headerPageNum);
-			file->allocatePage(rootPageNum);
-			IndexMetaInfo meta;
-			meta.relationName = relationName;
-			meta.attrByteOffset = attrByteOffset;
-			meta.attrType = attrType;
-			meta.rootPageNum =rootPageNum;
-			Page metapage = *reinterpret_cast<Page*>(&meta);
-			BlobFile::writePage(headerPageNum, metapage);
+			Page* metaPage, rootPage;
+			bufMgrIn->allocatePage(file, headerPageNum, metaPage);
+			bufMgrIn->allocatePage(file, rootPageNum, rootPage);
+			IndexMetaInfo* meta = reinterpret_cast<IndexMetaInfo*>(metaPage);
+			meta->relationName = relationName;
+			meta->attrByteOffset = attrByteOffset;
+			meta->attrType = attrType;
+			meta->rootPageNum = rootPageNum;
 		}
 	FileScan fs(relationName,bufMgrIn);
 	try
