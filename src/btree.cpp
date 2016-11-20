@@ -36,39 +36,43 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	idxStr<<relationName<<'.'<< attrByteOffset;
 	std::string indexName = idxStr.str();
 	outIndexName = indexName;
-	bufMgr=bufMgrIn;
+	bufMgr = bufMgrIn;
 	this->attrByteOffset = attrByteOffset;
 	this->attributeType = attrType;
-	if ( File::exists(indexName) ) file = &BlobFile::open(indexName);
+	if ( File::exists(indexName) ) {
+		file = &BlobFile::open(indexName);
+		Page* metaPage = &file->readPage(1);
+		IndexMetaInfo* meta = reinterpret_cast<IndexMetaInfo*>(metaPage);
+		this->rootPageNum = meta->rootPageNo;
+	}
 	else 
 		{
 			file = &BlobFile::create(indexName);
-			Page* metaPage, rootPage;
-			bufMgrIn->allocatePage(file, headerPageNum, metaPage);
-			bufMgrIn->allocatePage(file, rootPageNum, rootPage);
+			Page* metaPage;
+			bufMgr->allocatePage(file, headerPageNum, metaPage);
+			FileScan fs(relationName,bufMgr);
+			try
+			{
+				RecordId scanRid;
+				while(1)
+				{
+					fs.scanNext(scanRid);
+					std::string recordStr = fs.getRecord();
+					const char *record = recordStr.c_str();
+					void *key = record + attrByteOffset;
+					insertEntry(key,scanRid);
+				}
+			}
+			catch(EndOfFileException e)
+			{
+			}
 			IndexMetaInfo* meta = reinterpret_cast<IndexMetaInfo*>(metaPage);
 			meta->relationName = relationName;
 			meta->attrByteOffset = attrByteOffset;
 			meta->attrType = attrType;
 			meta->rootPageNum = rootPageNum;
 		}
-	FileScan fs(relationName,bufMgrIn);
-	try
-	{
-		RecordId scanRid;
-		while(1)
-		{
-			fs.scanNext(scanRid);
-			std::string recordStr = fs.getRecord();
-			const char *record = recordStr.c_str();
-			void *key = record + attrByteOffset;
-			insertEntry(key,scanRid);
-		}
-	}
-	catch(EndOfFileException e)
-	{
-
-	}
+	
 }
 
 
@@ -89,6 +93,10 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 	int val = *(static_cast<int*>key);
 	RIDKeyPair<int> element ;
 	element.set(rid, val);
+	Page* temp;
+	bufMgr->readPage(file, rootPageNum, temp);
+	NonLeafNodeInt* root = reinterpret_cast<NonLeafNodeInt*>(temp);
+	root.level = 0;
 
 }
 
