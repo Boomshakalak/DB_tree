@@ -48,8 +48,9 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	else 
 		{
 			file = &BlobFile::create(indexName);
-			Page* metaPage;
+			Page* metaPage, rootPage;
 			bufMgr->allocatePage(file, headerPageNum, metaPage);
+			bufMgr->allocatePage(file, rootPageNum, rootPage);
 			FileScan fs(relationName,bufMgr);
 			try
 			{
@@ -70,7 +71,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 			meta->relationName = relationName;
 			meta->attrByteOffset = attrByteOffset;
 			meta->attrType = attrType;
-			meta->rootPageNum = rootPageNum;
+			meta->rootPageNo = rootPageNum;
 		}
 	
 }
@@ -93,10 +94,6 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 	int val = *(static_cast<int*>key);
 	RIDKeyPair<int> element ;
 	element.set(rid, val);
-	Page* temp;
-	bufMgr->readPage(file, rootPageNum, temp);
-	NonLeafNodeInt* root = reinterpret_cast<NonLeafNodeInt*>(temp);
-	root.level = 0;
 
 }
 
