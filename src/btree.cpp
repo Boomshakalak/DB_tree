@@ -36,6 +36,9 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	idxStr<<relationName<<'.'<< attrByteOffset;
 	std::string indexName = idxStr.str();
 	outIndexName = indexName;
+	bufMgr=bufMgrIn;
+	this->attrByteOffset = attrByteOffset;
+	this->attributeType = attrType;
 	if ( File::exists(indexName) ) file = &BlobFile::open(indexName);
 	else 
 		{
@@ -86,6 +89,7 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 	int val = *(static_cast<int*>key);
 	RIDKeyPair<int> element ;
 	element.set(rid, val);
+
 }
 
 // -----------------------------------------------------------------------------
