@@ -41,7 +41,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	this->attributeType = attrType;
 	if ( File::exists(indexName) ) {
 		file = &BlobFile::open(indexName);
-		Page* metaPage = &file->readPage(1);
+		Page* metaPage = &(file->readPage(file->getFirstPageNo()));
 		IndexMetaInfo* meta = reinterpret_cast<IndexMetaInfo*>(metaPage);
 		this->rootPageNum = meta->rootPageNo;
 	}
