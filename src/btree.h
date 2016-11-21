@@ -146,6 +146,11 @@ struct NonLeafNodeInt{
    */
 	int level;
 
+    /**
+   * cout of the page used.
+   */
+  int k;
+
   /**
    * Stores keys.
    */
@@ -155,6 +160,7 @@ struct NonLeafNodeInt{
    * Stores page numbers of child pages which themselves are other non-leaf/leaf nodes in the tree.
    */
 	PageId pageNoArray[ INTARRAYNONLEAFSIZE + 1 ];
+  NonLeafNodeInt(): level(0), k(0), keyArray({0}), pageNoArray({0}){};
 };
 
 
@@ -168,6 +174,10 @@ struct LeafNodeInt{
 	int keyArray[ INTARRAYLEAFSIZE ];
 
   /**
+   * cout of the page used.
+   */
+  int k;
+  /**
    * Stores RecordIds.
    */
 	RecordId ridArray[ INTARRAYLEAFSIZE ];
@@ -177,6 +187,7 @@ struct LeafNodeInt{
 	 * This linking of leaves allows to easily move from one leaf to the next leaf during index scan.
    */
 	PageId rightSibPageNo;
+  LeafNodeInt():keyArray({0}),k(0),ridArray({0}),rightSibPageNo(0){};
 };
 
 
