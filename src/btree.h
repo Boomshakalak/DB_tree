@@ -45,14 +45,14 @@ enum Operator
 /**
  * @brief Number of key slots in B+Tree leaf for INTEGER key.
  */
-//                                                  sibling ptr             key               rid
-const  int INTARRAYLEAFSIZE = ( Page::SIZE - sizeof( PageId ) ) / ( sizeof( int ) + sizeof( RecordId ) );
+//                                             int k            sibling ptr             key               rid
+const  int INTARRAYLEAFSIZE = ( Page::SIZE - sizeof(int) - sizeof( PageId ) ) / ( sizeof( int ) + sizeof( RecordId ) );
 
 /**
  * @brief Number of key slots in B+Tree non-leaf for INTEGER key.
  */
-//                                                     level     extra pageNo                  key       pageNo
-const  int INTARRAYNONLEAFSIZE = ( Page::SIZE - sizeof( int ) - sizeof( PageId ) ) / ( sizeof( int ) + sizeof( PageId ) );
+//                                                    k level     extra pageNo                  key       pageNo
+const  int INTARRAYNONLEAFSIZE = ( Page::SIZE - 2*sizeof( int ) - sizeof( PageId ) ) / ( sizeof( int ) + sizeof( PageId ) );
 
 /**
  * @brief Structure to store a key-rid pair. It is used to pass the pair to functions that 
@@ -161,6 +161,7 @@ struct NonLeafNodeInt{
    */
 	PageId pageNoArray[ INTARRAYNONLEAFSIZE + 1 ];
   NonLeafNodeInt(): level(0), k(0), keyArray({0}), pageNoArray({0}){};
+  void split();
 };
 
 
@@ -188,6 +189,11 @@ struct LeafNodeInt{
    */
 	PageId rightSibPageNo;
   LeafNodeInt():keyArray({0}),k(0),ridArray({0}),rightSibPageNo(0){};
+    /**
+   * val is the insert val
+   * Insert the val if the node is not full
+   */
+  void insertNonFull(int val);
 };
 
 

@@ -51,6 +51,9 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 			Page* metaPage, rootPage;
 			bufMgr->allocatePage(file, headerPageNum, metaPage);
 			bufMgr->allocatePage(file, rootPageNum, rootPage);
+			NonLeafNodeInt* root = reinterpret_cast<NonLeafNodeInt*>(rootPage);
+			*root = NonLeafNodeInt();
+			root->level = 1;
 			FileScan fs(relationName,bufMgr);
 			try
 			{
@@ -125,6 +128,13 @@ const void BTreeIndex::scanNext(RecordId& outRid)
 const void BTreeIndex::endScan() 
 {
 
+}
+LeafNodeInt::split(){
+	if (k < INTARRAYNONLEAFSIZE) return;
+	k = k/2;
+	LeafNodeInt ln;
+	ln.k = k;
+	bufMgr->allocatePage()
 }
 
 }
