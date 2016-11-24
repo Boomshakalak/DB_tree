@@ -97,6 +97,12 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 	int val = *(static_cast<int*>key);
 	RIDKeyPair<int> element ;
 	element.set(rid, val);
+	Page* pg;
+	bufMgr->readPage(file,rootPageNum,pg)
+	NonLeafNodeInt* nlNode = reinterpret_cast<NonLeafNodeInt*>pg;
+	while (1){
+		if (pg.k == INTARRAYNONLEAFSIZE -1)
+	}
 
 }
 
@@ -129,12 +135,18 @@ const void BTreeIndex::endScan()
 {
 
 }
-LeafNodeInt::split(){
-	if (k < INTARRAYNONLEAFSIZE) return;
-	k = k/2;
-	LeafNodeInt ln;
-	ln.k = k;
-	bufMgr->allocatePage()
+BTreeIndex::splitChildren(NonLeafNodeInt* node)
+{
+
 }
+BTreeIndex::insertNonFull(NonLeafNodeInt* node ,int val)
+{
+
+}
+BTreeIndex::splitChildren(LeafNodeInt* node)
+{
+
+}
+BTreeIndex::insertNonFull(LeafNodeInt* node, RIDKeyPair rk)
 
 }
