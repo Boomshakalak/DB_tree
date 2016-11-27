@@ -147,7 +147,7 @@ struct NonLeafNodeInt{
 	int level;
 
     /**
-   * cout of the page used.
+   * cout of the key stored.
    */
   int k;
 
@@ -175,7 +175,7 @@ struct LeafNodeInt{
 	int keyArray[ INTARRAYLEAFSIZE ];
 
   /**
-   * cout of the page used.
+   * cout of the key stored.
    */
   int k;
   /**
