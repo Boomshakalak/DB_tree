@@ -88,6 +88,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 
 BTreeIndex::~BTreeIndex()
 {
+	bufMgr->flushFile(file);
 }
 
 // -----------------------------------------------------------------------------
@@ -96,7 +97,7 @@ BTreeIndex::~BTreeIndex()
 
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) 
 {
-	int val = *(static_cast<int*>key);
+	int val = *(static_cast<int*>(key));
 	RIDKeyPair<int> element ;
 	element.set(rid, val);
 	Page* rpg;
@@ -129,7 +130,8 @@ const void BTreeIndex::startScan(const void* lowValParm,
 				   const void* highValParm,
 				   const Operator highOpParm)
 {
-
+	int low = *reinterpret_cast<int*>lowValParm;
+	int high = *reinterpret_cast<int*>highValParm;
 }
 
 // -----------------------------------------------------------------------------
@@ -185,6 +187,7 @@ BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 			lNodeR->ridArray[i] = lNodeL->ridArray[i+(INTARRAYLEAFSIZE+1)/2];
 		}	
 		lNodeL->k = (INTARRAYLEAFSIZE+1)/2;
+		lNodeL->rightSibPageNo = pN;
 	}
 	for (int i = node->k+1; i>c+1; --i)
 	{
@@ -200,7 +203,7 @@ BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 	bufMgr->unPinPage(file,pN,true);
 	bufMgr->unPinPage(file,node->pageNoArray[c],true);
 }
-BTreeIndex::insertNonFull(NonLeafNodeInt* node , int val, recordID rid)
+BTreeIndex::insertNonFull(NonLeafNodeInt* node , int val, RecordID rid)
 {
 	Page* pg;
 	int pos = node->k-1;
