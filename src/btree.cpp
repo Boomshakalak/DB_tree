@@ -156,6 +156,7 @@ BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 	Page* curr;
 	Page* subl;
 	PageId pN;
+	int key;
 	bufMgr->allocatePage(file,pN,subl);
 	bufMgr->readPage(file,node->pageNoArray[c],curr);
 	if (node->level != 1 ){
@@ -170,13 +171,14 @@ BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 		for (int i = 0; i < INTARRAYNONLEAFSIZE/2+1; ++i)
 		{
 			nlNodeR->pageNoArray[i] = nlNodeL->pageNoArray[i+(INTARRAYNONLEAFSIZE+1)/2];
-		}
-	
-		nlNodeL->k = (INTARRAYNONLEAFSIZE+1)/2;
+		}	
+		nlNodeL->k = (INTARRAYNONLEAFSIZE-1)/2;
+		key =  nlNodeL->keyArray[nlNodeL->k];
 	}
 	if (node->level == 1){
 		LeafNodeInt* lNodeR = reinterpret_cast<LeafNodeInt*> subl;
 		LeafNodeInt* lNodeL = reinterpret_cast<LeafNodeInt*> curr;
+		nlNodeR->level = nlNodeL->level;
 		lNodeR->k = INTARRAYLEAFSIZE/2;
 		for (int i = 0; i < INTARRAYLEAFSIZE/2; ++i)
 		{
@@ -188,6 +190,7 @@ BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 		}	
 		lNodeL->k = (INTARRAYLEAFSIZE+1)/2;
 		lNodeL->rightSibPageNo = pN;
+		key =  lNodeL->keyArray[nlNodeL->k-1];
 	}
 	for (int i = node->k+1; i>c+1; --i)
 	{
@@ -198,7 +201,7 @@ BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 	{
 		node->keyArray[i] = node->keyArray[i-1];
 	}
-	node->keyArray[c] =  nlNodeL->keyArray[nlNodeL->k];
+	node->keyArray[c]= key;
 	node->k++;
 	bufMgr->unPinPage(file,pN,true);
 	bufMgr->unPinPage(file,node->pageNoArray[c],true);
