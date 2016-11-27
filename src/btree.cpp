@@ -117,6 +117,7 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 	}
 	else
 		insertNonFull(root,val);
+	bufMgr->unPinPage(file,rootpageNum,true);
 }
 
 // -----------------------------------------------------------------------------
