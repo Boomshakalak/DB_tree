@@ -48,12 +48,19 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	else 
 		{
 			file = &BlobFile::create(indexName);
-			Page* metaPage, rootPage;
+			Page* metaPage, rootPage, firstLeaf;
+			PageId pid;
 			bufMgr->allocatePage(file, headerPageNum, metaPage);
 			bufMgr->allocatePage(file, rootPageNum, rootPage);
+			bufMgr->allocatePage(file, pid, firstLeaf);
 			NonLeafNodeInt* root = reinterpret_cast<NonLeafNodeInt*>(rootPage);
 			*root = NonLeafNodeInt();
 			root->level = 1;
+			root->pageNoArray[0] = pid;
+			LeafNodeInt* fLeaf= reinterpret_cast<LeafNodeInt*>(firstLeaf);
+			fLeaf = LeafNodeInt();
+			bufMgr->unPinPage(file,rootPageNum,true);
+			bufMgr->unPinPage(file,pid,true);
 			FileScan fs(relationName,bufMgr);
 			try
 			{
@@ -76,7 +83,6 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 			meta->attrType = attrType;
 			meta->rootPageNo = rootPageNum;
 			bufMgr->unPinPage(file,headerPageNum,true);
-			bufMgr->unPinPage(file,rootPageNum,true);
 		}
 	
 }
