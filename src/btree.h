@@ -189,11 +189,7 @@ struct LeafNodeInt{
    */
 	PageId rightSibPageNo;
   LeafNodeInt():keyArray({0}),k(0),ridArray({0}),rightSibPageNo(0){};
-    /**
-   * val is the insert val
-   * Insert the val if the node is not full
-   */
-  void insertNonFull(int val);
+
 };
 
 

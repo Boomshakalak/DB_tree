@@ -113,12 +113,10 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 		nRoot->pageNoArray[0] = temp;
 		splitChildren(nRoot,0);
 		bufMgr->unPinPage(file,temp,true);
-		bufMgr->unPinPage(file,rootPageNum,true);
 		insertNonFull(nRoot,val);
 	}
 	else
 		insertNonFull(root,val);
-
 }
 
 // -----------------------------------------------------------------------------
