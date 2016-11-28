@@ -135,26 +135,158 @@ const void BTreeIndex::startScan(const void* lowValParm,
 				   const void* highValParm,
 				   const Operator highOpParm)
 {
-	int low = *reinterpret_cast<int*>lowValParm;
-	int high = *reinterpret_cast<int*>highValParm;
-}
+	//int low = *reinterpret_cast<int*>lowValParm;
+	//int high = *reinterpret_cast<int*>highValParm;
+	scanExecuting = true;
+	if (lowOpParm != GT && lowOpParm !=GTE ){
+		throw BadOpcodesException();
+	}
+	if(highOpParm != LT && highOpParm != LTE){
+		throw BadOpcodesException();
+	}
 
+	this->lowOp = lowOpParm;
+	this->highOp = highOpParm;
+
+	// Call tmplate helper to do the work.
+	if(attributeType == INTEGER) {
+		this->lowValInt = *((int*) lowValParm);
+		this->highValInt = *((int *) highValParm);
+		startScanHelper<int, NonLeafNodeInt>(*((int*) lowValParm), *((int *) highValParm), INTARRAYNONLEAFSIZE);
+	} else if (attributeType == DOUBLE) {
+		this->lowValDouble = *((double*) lowValParm);
+		this->highValDouble = *((double *) highValParm);
+		startScanHelper<double , NonLeafNodeDouble>(*((double *) lowValParm), *((double *) highValParm), DOUBLEARRAYNONLEAFSIZE);
+	} else {
+		strncpy((char*) this->lowValString.c_str(), (char *)lowValParm, STRINGSIZE-1);
+		strncpy(lowValChar, (char *)lowValParm, STRINGSIZE);
+		strncpy((char*) this->highValString.c_str(), (char *)highValParm, STRINGSIZE-1);
+		strncpy(highValChar, (char *)highValParm, STRINGSIZE);
+		startScanHelper<char[STRINGSIZE], NonLeafNodeString> (lowValChar, highValChar, STRINGARRAYNONLEAFSIZE);
+	}	
+}
+/*
+ * Helper method of startScan, basically it base on the low bound to find the first position of the entry.
+ * This function helps the startScan function.
+ * T is the data type.
+ * T1 is the non-leaf struct.
+ * This function is called by the startScan and do the work.
+ * */
+template<class T, class T1>
+void BTreeIndex::startScanHelper(T lowValParm,
+								 T highValParm,
+								 int NONLEAFARRAYMAX)
+{
+	if(biggerThan<T> (lowValParm,  highValParm))
+		throw BadScanrangeException();
+
+	//find first one
+	currentPageNum = rootPageNum;
+	bufMgr->readPage(file, currentPageNum, currentPageData);
+	T1* nonLeafNode = (T1*) currentPageData;
+
+	int pos = 0;
+	while(nonLeafNode->level != 1) {
+		// If current level is not 1, then next page is not leaf page.
+		// Still need to go to next level.
+		pos = 0;
+		while(!smallerThan<T> (lowValParm, nonLeafNode->keyArray[pos])
+			  && nonLeafNode->pageNoArray[pos + 1] != 0
+			  && pos < NONLEAFARRAYMAX)
+			pos++;
+		PageId nextPageId = nonLeafNode->pageNoArray[pos];
+		bufMgr->readPage(file, nextPageId, currentPageData);
+		bufMgr->unPinPage(file, currentPageNum, false);
+		currentPageNum = nextPageId;
+		nonLeafNode = (T1*) currentPageData;
+	}
+
+	// This page is level 1, which means next page is leaf node.
+	pos = 0;
+	while(!smallerThan<T> (lowValParm, nonLeafNode->keyArray[pos])
+		  && nonLeafNode->pageNoArray[pos + 1] != 0
+		  && pos < NONLEAFARRAYMAX)
+		pos++;
+	PageId nextPageId = nonLeafNode->pageNoArray[pos];
+	bufMgr->readPage(file, nextPageId, currentPageData);
+	bufMgr->unPinPage(file, currentPageNum, false);
+	currentPageNum = nextPageId;
+	nextEntry = 0;
+}
 // -----------------------------------------------------------------------------
 // BTreeIndex::scanNext
 // -----------------------------------------------------------------------------
 
 const void BTreeIndex::scanNext(RecordId& outRid) 
 {
+	if(scanExecuting == false)
+		throw ScanNotInitializedException();
 
+	if(attributeType == INTEGER)
+		scanNextHelper<int, LeafNodeInt> (outRid, lowValInt, highValInt, INTARRAYLEAFSIZE);
+	else if (attributeType == DOUBLE)
+		scanNextHelper<double, LeafNodeDouble> (outRid, lowValDouble, highValDouble, DOUBLEARRAYLEAFSIZE);
+	else
+		scanNextHelper<char[STRINGSIZE], LeafNodeString> (outRid, lowValChar, highValChar, STRINGARRAYLEAFSIZE);
 }
+template <class T, class T1>
+void BTreeIndex::scanNextHelper(RecordId &outRid, T lowVal, T highVal, int ARRAYMAX)
+{
+	T1* leafNode;
+	while(1){
+		leafNode = (T1*) currentPageData;
 
+		// Go to next page.
+		if(leafNode->ridArray[nextEntry].page_number == 0 || nextEntry == ARRAYMAX) {
+			PageId nextPageNum = leafNode->rightSibPageNo;
+			if(nextPageNum == 0){
+				// Next page is 0, scan finish.
+				bufMgr->unPinPage(file, currentPageNum, false);
+				throw IndexScanCompletedException();
+			}
+
+			bufMgr->unPinPage(file, currentPageNum, false);
+			currentPageNum = nextPageNum;
+
+			bufMgr->readPage(file, currentPageNum, currentPageData);
+			nextEntry = 0;
+			continue;
+		}
+
+		// Do not satisfy.
+		if((lowOp==GT && !biggerThan<T> (leafNode->keyArray[nextEntry], lowVal) )
+		   || (lowOp==GTE && smallerThan<T> (leafNode->keyArray[nextEntry], lowVal))
+		   ) {
+			nextEntry++;
+			continue;
+		}
+
+		// Value bigger that high value, scan end.
+		if((highOp==LT && !smallerThan<T> (leafNode->keyArray[nextEntry],  highVal))
+		   || (highOp==LTE && biggerThan<T> (leafNode->keyArray[nextEntry], highVal) ))
+			throw IndexScanCompletedException();
+
+		// Got a record.
+		outRid = leafNode->ridArray[nextEntry];
+		nextEntry++;
+		return ;
+	}
+}
 // -----------------------------------------------------------------------------
 // BTreeIndex::endScan
 // -----------------------------------------------------------------------------
 //
 const void BTreeIndex::endScan() 
 {
+	if(scanExecuting == false)
+		throw ScanNotInitializedException();
+	scanExecuting = false;
 
+	try {
+		bufMgr->unPinPage(file, currentPageNum, false);
+	} catch (PageNotPinnedException e) {
+	} catch (HashNotFoundException e) {
+	}
 }
 BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 {
