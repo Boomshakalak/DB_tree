@@ -99,6 +99,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 BTreeIndex::~BTreeIndex()
 {
 	bufMgr->flushFile(file);
+	delete file;
 }
 
 // -----------------------------------------------------------------------------
