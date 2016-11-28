@@ -57,6 +57,11 @@ struct RecordId {
   bool operator!=(const RecordId& rhs) const {
     return (page_number != rhs.page_number) || (slot_number != rhs.slot_number);
   }
+  RecordId& operator = (const RecordId& rhs){
+    this->page_number = rhs.page_number;
+    this->slot_number =rhs.slot_number;
+    return *this;
+  }
 };
 
 }

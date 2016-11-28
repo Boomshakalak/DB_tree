@@ -161,7 +161,6 @@ struct NonLeafNodeInt{
    */
 	PageId pageNoArray[ INTARRAYNONLEAFSIZE + 1 ];
   NonLeafNodeInt(): level(0), k(0), keyArray({0}), pageNoArray({0}){};
-  void split();
 };
 
 
@@ -188,7 +187,7 @@ struct LeafNodeInt{
 	 * This linking of leaves allows to easily move from one leaf to the next leaf during index scan.
    */
 	PageId rightSibPageNo;
-  LeafNodeInt():keyArray({0}),k(0),ridArray({0}),rightSibPageNo(0){};
+  LeafNodeInt():keyArray({0}),k(0),rightSibPageNo(0){};
 
 };
 
@@ -377,7 +376,8 @@ class BTreeIndex {
 	 * @throws ScanNotInitializedException If no scan has been initialized.
 	**/
 	const void endScan();
-	
+	void insertNonFull(NonLeafNodeInt* node , int val, RecordId rid);
+  void splitChildren(NonLeafNodeInt* node, int c);
 };
 
 }
