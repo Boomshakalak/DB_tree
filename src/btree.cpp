@@ -39,9 +39,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	this->attrByteOffset = attrByteOffset;
 	this->attributeType = attrType;
 	if ( File::exists(indexName) ) {
-		BlobFile bf = BlobFile(indexName,false);
-		bf = BlobFile::open(outIndexName);
-		file = &bf;
+		file = new BlobFile(outIndexName,false);
 		Page* metaPage;
 		bufMgr->readPage(file,file->getFirstPageNo(),metaPage);
 		bufMgr->unPinPage(file,file->getFirstPageNo(),false);
@@ -50,9 +48,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	}
 	else 
 		{
-			BlobFile bf = BlobFile(indexName,true);
-			bf = BlobFile::create(indexName);
-			file = &bf;
+			file = new BlobFile(indexName,true);
 			Page *metaPage,*rootPage, *firstLeaf;
 			PageId pid;
 			bufMgr->allocPage(file, headerPageNum, metaPage);
