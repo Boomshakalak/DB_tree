@@ -53,7 +53,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 			BlobFile bf = BlobFile(indexName,true);
 			bf = BlobFile::create(indexName);
 			file = &bf;
-			Page* metaPage, rootPage, firstLeaf;
+			Page *metaPage,*rootPage, *firstLeaf;
 			PageId pid;
 			bufMgr->allocPage(file, headerPageNum, metaPage);
 			bufMgr->allocPage(file, rootPageNum, rootPage);
@@ -63,8 +63,9 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 			root->k=1;
 			root->level = 1;
 			root->pageNoArray[0] = pid;
-			LeafNodeInt* fLeaf= reinterpret_cast<LeafNodeInt*>(firstLeaf);
-			fLeaf = LeafNodeInt();
+			LeafNodeInt* fLeaf;
+			fLeaf = reinterpret_cast<LeafNodeInt*>(firstLeaf);
+			*fLeaf = LeafNodeInt();
 			bufMgr->unPinPage(file,rootPageNum,true);
 			bufMgr->unPinPage(file,pid,true);
 			FileScan fs(relationName,bufMgr);
@@ -76,7 +77,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 					fs.scanNext(scanRid);
 					std::string recordStr = fs.getRecord();
 					const char *record = recordStr.c_str();
-					void *key = record + attrByteOffset;
+					void* key = (void*)(record + attrByteOffset);
 					insertEntry(key,scanRid);
 				}
 			}
@@ -110,7 +111,7 @@ BTreeIndex::~BTreeIndex()
 
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) 
 {
-	int val = *(static_cast<int*>(key));
+	int val = *((int*)(key));
 	RIDKeyPair<int> element ;
 	element.set(rid, val);
 	Page* rpg;
@@ -130,7 +131,7 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 	}
 	else
 		insertNonFull(root,val,rid);
-	bufMgr->unPinPage(file,rootpageNum,true);
+	bufMgr->unPinPage(file,rootPageNum,true);
 }
 
 // -----------------------------------------------------------------------------
@@ -142,12 +143,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 				   const void* highValParm,
 				   const Operator highOpParm)
 {
-<<<<<<< HEAD
-	int low = *reinterpret_cast<int*>(lowValParm);
-	int high = *reinterpret_cast<int*>(highValParm);
-=======
-	//int low = *reinterpret_cast<int*>lowValParm;
-	//int high = *reinterpret_cast<int*>highValParm;
+
 	scanExecuting = true;
 	if (lowOpParm != GT && lowOpParm !=GTE ){
 		throw BadOpcodesException();
@@ -175,7 +171,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 		strncpy(highValChar, (char *)highValParm, STRINGSIZE);
 		startScanHelper<char[STRINGSIZE], NonLeafNodeString> (lowValChar, highValChar, STRINGARRAYNONLEAFSIZE);
 	}	
->>>>>>> 1c9b5b3ee979547e378aa65bc1b0c66a6c6a9ba7
+
 }
 /*
  * Helper method of startScan, basically it base on the low bound to find the first position of the entry.
@@ -338,7 +334,7 @@ void BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 		}	
 		lNodeL->k = (INTARRAYLEAFSIZE+1)/2;
 		lNodeL->rightSibPageNo = pN;
-		key =  lNodeL->keyArray[nlNodeL->k-1];
+		key =  lNodeL->keyArray[lNodeL->k-1];
 	}
 	for (int i = node->k+1; i>c+1; --i)
 	{
