@@ -15,11 +15,40 @@
 #include "exceptions/index_scan_completed_exception.h"
 #include "exceptions/file_not_found_exception.h"
 #include "exceptions/end_of_file_exception.h"
+#include "exceptions/hash_not_found_exception.h"
+#include "exceptions/page_not_pinned_exception.h"
+
 
 //#define DEBUG
 
 namespace badgerdb
 {
+
+// Type T small than comparison
+template <class T>
+bool smallerThan(T a, T b){
+	return a<b;
+}
+
+// specialiazation char[STRINGSIZE] smaller comparison
+template <>
+bool smallerThan<char[STRINGSIZE]>(char a[STRINGSIZE], char b[STRINGSIZE]){
+	return strncmp(a, b, STRINGSIZE) < 0;
+}
+
+//  Type T bigger comparison
+template <class T>
+bool biggerThan(T a, T b){
+	return a>b;
+}
+
+// specialization char[STRINGSIZE] bigger comparison
+template <>
+bool biggerThan<char[STRINGSIZE]>(char a[STRINGSIZE], char b[STRINGSIZE]){
+	return strncmp(a, b, STRINGSIZE) > 0;
+}
+
+
 
 // -----------------------------------------------------------------------------
 // BTreeIndex::BTreeIndex -- Constructor
@@ -142,9 +171,10 @@ const void BTreeIndex::startScan(const void* lowValParm,
 {
 
 	scanExecuting = true;
-	if (lowOpParm != GT && lowOpParm !=GTE ){
+	if (lowOpParm != GT && lowOpParm != GTE ){
 		throw BadOpcodesException();
 	}
+
 	if(highOpParm != LT && highOpParm != LTE){
 		throw BadOpcodesException();
 	}
@@ -155,17 +185,17 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	// Call tmplate helper to do the work.
 	if(attributeType == INTEGER) {
 		this->lowValInt = *((int*) lowValParm);
-		this->highValInt = *((int *) highValParm);
-		startScanHelper<int, NonLeafNodeInt>(*((int*) lowValParm), *((int *) highValParm), INTARRAYNONLEAFSIZE);
+		this->highValInt = *((int*) highValParm);
+		startScanHelper<int, NonLeafNodeInt>(*((int*) lowValParm), *((int*) highValParm), INTARRAYNONLEAFSIZE);
 	} else if (attributeType == DOUBLE) {
 		this->lowValDouble = *((double*) lowValParm);
-		this->highValDouble = *((double *) highValParm);
-		startScanHelper<double , NonLeafNodeDouble>(*((double *) lowValParm), *((double *) highValParm), DOUBLEARRAYNONLEAFSIZE);
+		this->highValDouble = *((double*) highValParm);
+		startScanHelper<double , NonLeafNodeDouble>(*((double*) lowValParm), *((double*) highValParm), DOUBLEARRAYNONLEAFSIZE);
 	} else {
-		strncpy((char*) this->lowValString.c_str(), (char *)lowValParm, STRINGSIZE-1);
-		strncpy(lowValChar, (char *)lowValParm, STRINGSIZE);
-		strncpy((char*) this->highValString.c_str(), (char *)highValParm, STRINGSIZE-1);
-		strncpy(highValChar, (char *)highValParm, STRINGSIZE);
+		strncpy((char*) this->lowValString.c_str(), (char*)lowValParm, STRINGSIZE-1);
+		strncpy(lowValChar, (char*)lowValParm, STRINGSIZE);
+		strncpy((char*) this->highValString.c_str(), (char*)highValParm, STRINGSIZE-1);
+		strncpy(highValChar, (char*)highValParm, STRINGSIZE);
 		startScanHelper<char[STRINGSIZE], NonLeafNodeString> (lowValChar, highValChar, STRINGARRAYNONLEAFSIZE);
 	}	
 
