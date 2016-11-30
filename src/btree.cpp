@@ -172,7 +172,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			// If current level is not 1, then next page is not leaf page.
 			// Still need to go to next level.
 			pos = 0;
-			while(!(lowValParm < nonLeafNode->keyArray[pos]) && nonLeafNode->pageNoArray[pos + 1] != 0)
+			while(!(this->lowValInt < nonLeafNode->keyArray[pos]) && nonLeafNode->pageNoArray[pos + 1] != 0)
 				pos++;
 			PageId nextPageId = nonLeafNode->pageNoArray[pos];
 			bufMgr->readPage(file, nextPageId, currentPageData);
@@ -183,7 +183,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 
 		// This page is level 1, which means next page is leaf node.
 		pos = 0;
-		while(!(lowValParm < nonLeafNode->keyArray[pos]) && nonLeafNode->pageNoArray[pos + 1] != 0)
+		while(!(this->lowValInt < nonLeafNode->keyArray[pos]) &&  nonLeafNode->pageNoArray[pos + 1] != 0)
 			pos++;
 		PageId nextPageId = nonLeafNode->pageNoArray[pos];
 		bufMgr->readPage(file, nextPageId, currentPageData);
