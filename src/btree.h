@@ -42,11 +42,6 @@ enum Operator
 };
 
 /**
- * @brief Size of String key.
- */
-const  int STRINGSIZE = 10;
-
-/**
  * @brief Number of key slots in B+Tree leaf for INTEGER key.
  */
 //                                             int k            sibling ptr             key               rid
@@ -281,7 +276,7 @@ class BTreeIndex {
    * Low STRING value for scan.
    */
 	std::string	lowValString;
-	char lowValChar[STRINGSIZE];
+  
   /**
    * High INTEGER value for scan.
    */
@@ -296,7 +291,6 @@ class BTreeIndex {
    * High STRING value for scan.
    */
 	std::string highValString;
-	char highValChar[STRINGSIZE];
 	
   /**
    * Low Operator. Can only be GT(>) or GTE(>=).
@@ -373,16 +367,8 @@ class BTreeIndex {
 	 * @throws ScanNotInitializedException If no scan has been initialized.
 	 * @throws IndexScanCompletedException If no more records, satisfying the scan criteria, are left to be scanned.
 	**/
-	template<class T, class T1>
-	void startScanHelper(T lowValParm,
-						 T highValParm,
-						 int ARRAYMAX);
 
 	const void scanNext(RecordId& outRid);  // returned record id
-
-
-	template <class T, class T1>
-	void scanNextHelper(RecordId& outRid, T lowVal, T highVal, int ARRAYMAX);
 
   /**
 	 * Terminate the current scan. Unpin any pinned pages. Reset scan specific variables.
