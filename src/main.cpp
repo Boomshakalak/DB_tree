@@ -20,18 +20,18 @@
 #include "exceptions/scan_not_initialized_exception.h"
 #include "exceptions/end_of_file_exception.h"
 
-#define checkPassFail(a, b) 																				\
-{																																		\
-	if(a == b)																												\
-		std::cout << "\nTest passed at line no:" << __LINE__ << "\n";		\
-	else																															\
-	{																																	\
-		std::cout << "\nTest FAILS at line no:" << __LINE__;						\
-		std::cout << "\nExpected no of records:" << b;									\
-		std::cout << "\nActual no of records found:" << a;							\
-		std::cout << std::endl;																					\
-		exit(1);																												\
-	}																																	\
+#define checkPassFail(a, b) 																				
+{																																		
+	if(a == b)																												
+		std::cout << "\nTest passed at line no:" << __LINE__ << "\n";		
+	else																															
+	{																																	
+		std::cout << "\nTest FAILS at line no:" << __LINE__;						
+		std::cout << "\nExpected no of records:" << b;									
+		std::cout << "\nActual no of records found:" << a;							
+		std::cout << std::endl;																					
+		exit(1);																												
+	}																																	
 }
 
 using namespace badgerdb;
@@ -41,16 +41,18 @@ using namespace badgerdb;
 // -----------------------------------------------------------------------------
 int testNum = 1;
 const std::string relationName = "relA";
+const std::string relName = "relB";
 //If the relation size is changed then the second parameter 2 chechPassFail may need to be changed to number of record that are expected to be found during the scan, else tests will erroneously be reported to have failed.
 const int	relationSize = 5000;
+const int	relSize = 10000;
 std::string intIndexName, doubleIndexName, stringIndexName;
 
 // This is the structure for tuples in the base relation
 
 typedef struct tuple {
 	int i;
-	double d;
-	char s[64];
+	//double d;
+	//char s[64];
 } RECORD;
 
 PageFile* file1;
@@ -93,20 +95,25 @@ int main(int argc, char **argv)
 	{
 		// Create a new database file.
 		PageFile new_file = PageFile::create(relationName);
-
+		PageFile nfile = PageFile::create(relName);
 		// Allocate some pages and put data on them.
 		for (int i = 0; i < 20; ++i)
 		{
 			PageId new_page_number;
 			Page new_page = new_file.allocatePage(new_page_number);
+			PageId npn;
+			Page npage = nfile.allocatePage(npn);
 
-    	sprintf(record1.s, "%05d string record", i);
+    	//sprintf(record1.s, "%05d string record", i);
     	record1.i = i;
-    	record1.d = (double)i;
+    	//record1.d = (double)i;
     	std::string new_data(reinterpret_cast<char*>(&record1), sizeof(record1));
 
 			new_page.insertRecord(new_data);
 			new_file.writePage(new_page_number, new_page);
+			
+			npage.insertRecord(new_data);
+			new_file.writePage(npn, npage);
 		}
 
 	}
@@ -132,6 +139,25 @@ int main(int argc, char **argv)
 		{
 			std::cout << "Read all records" << std::endl;
 		}
+
+		FileScan nfscan(relName, bufMgr);
+		try
+		{
+			RecordId scanRid;
+			while (1)
+			{
+				nfscan.scanNext(scanRid);
+				//Assuming RECORD.i is our key, lets extract the key, which we know is INTEGER and whose byte offset is also know inside the record. 
+				std::string recordStr = nfscan.getRecord();
+				const char *record = recordStr.c_str();
+				int key = *((int *)(record + offsetof(RECORD, i)));
+				std::cout << "Extracted : " << key << std::endl;
+			}
+		}
+		catch (EndOfFileException e)
+		{
+			std::cout << "Read all records" << std::endl;
+		}
 	}
 	// filescan goes out of scope here, so relation file gets closed.
 
@@ -140,6 +166,7 @@ int main(int argc, char **argv)
 	test1();
 	test2();
 	test3();
+	test4();
 	//errorTests();
 
   return 1;
@@ -178,6 +205,16 @@ void test3()
 	deleteRelation();
 }
 
+void test4()
+{
+	// Create a relation with tuples valued 0 to relSize and perform index tests 
+	// on attributes of all three types (int, double, string)
+	std::cout << "--------------------" << std::endl;
+	std::cout << "createRelationMassive" << std::endl;
+	createRelationMassive();
+	indexTests4();
+	deleteRelation();
+}
 // -----------------------------------------------------------------------------
 // createRelationForward
 // -----------------------------------------------------------------------------
@@ -204,9 +241,9 @@ void createRelationForward()
   // Insert a bunch of tuples into the relation.
   for(int i = 0; i < relationSize; i++ )
 	{
-    sprintf(record1.s, "%05d string record", i);
+    //sprintf(record1.s, "%05d string record", i);
     record1.i = i;
-    record1.d = (double)i;
+    //record1.d = (double)i;
     std::string new_data(reinterpret_cast<char*>(&record1), sizeof(record1));
 
 		while(1)
@@ -251,9 +288,9 @@ void createRelationBackward()
   // Insert a bunch of tuples into the relation.
   for(int i = relationSize - 1; i >= 0; i-- )
 	{
-    sprintf(record1.s, "%05d string record", i);
+    //sprintf(record1.s, "%05d string record", i);
     record1.i = i;
-    record1.d = i;
+    //record1.d = i;
 
     std::string new_data(reinterpret_cast<char*>(&record1), sizeof(RECORD));
 
@@ -311,9 +348,9 @@ void createRelationRandom()
   {
     pos = random() % (relationSize-i);
     val = intvec[pos];
-    sprintf(record1.s, "%05d string record", val);
+    //sprintf(record1.s, "%05d string record", val);
     record1.i = val;
-    record1.d = val;
+    //record1.d = val;
 
     std::string new_data(reinterpret_cast<char*>(&record1), sizeof(RECORD));
 
@@ -341,6 +378,55 @@ void createRelationRandom()
 }
 
 // -----------------------------------------------------------------------------
+// createRelationMassive
+// -----------------------------------------------------------------------------
+
+void createRelationMassive()
+{
+	std::vector<RecordId> ridVec;
+	// destroy any old copies of relation file
+	try
+	{
+		File::remove(relName);
+	}
+	catch (FileNotFoundException e)
+	{
+	}
+
+	file1 = new PageFile(relName, true);
+
+	// initialize all of record1.s to keep purify happy
+	//memset(record1.s, ' ', sizeof(record1.s));
+	PageId npn;
+	Page new_page = file1->allocatePage(npn);
+
+	// Insert a bunch of tuples into the relation.
+	for (int i = 0; i < relSize; i++)
+	{
+		//sprintf(record1.s, "%05d string record", i);
+		record1.i = i+2;
+		//record1.d = (double)i;
+		std::string new_data(reinterpret_cast<char*>(&record1), sizeof(record1));
+
+		while (1)
+		{
+			try
+			{
+				new_page.insertRecord(new_data);
+				break;
+			}
+			catch (InsufficientSpaceException e)
+			{
+				file1->writePage(npn, new_page);
+				new_page = file1->allocatePage(npn);
+			}
+		}
+	}
+
+	file1->writePage(npn, new_page);
+}
+
+// -----------------------------------------------------------------------------
 // indexTests
 // -----------------------------------------------------------------------------
 
@@ -357,6 +443,45 @@ void indexTests()
   	{
   	}
   }
+}
+
+// -----------------------------------------------------------------------------
+// indexTests4
+// -----------------------------------------------------------------------------
+
+void indexTests4()
+{
+	if (testNum == 1)
+	{
+		intTests4();
+		try
+		{
+			File::remove(intIndexName);
+		}
+		catch (FileNotFoundException e)
+		{
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+// intTests4
+// -----------------------------------------------------------------------------
+
+void intTests()
+{
+	std::cout << "Create a B+ Tree index on the integer field" << std::endl;
+	BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple, i), INTEGER);
+
+	// run some tests
+	    checkPassFail(intScan(&index, 25, GT, 40, LT), 14)
+		checkPassFail(intScan(&index, 20, GTE, 35, LTE), 16)
+		checkPassFail(intScan(&index, -3, GT, 3, LT), 3)
+		checkPassFail(intScan(&index, 996, GT, 1001, LT), 4)
+		checkPassFail(intScan(&index, 0, GTE, 1, LTE), 0)
+		checkPassFail(intScan(&index, 300, GT, 400, LT), 99)
+		checkPassFail(intScan(&index, 3000, GTE, 4000, LT), 1000)
+		checkPassFail(intScan(&index, 2, GTE, 9999, LTE), 9998)
 }
 
 // -----------------------------------------------------------------------------
@@ -460,16 +585,16 @@ void errorTests()
   file1 = new PageFile(relationName, true);
 	
   // initialize all of record1.s to keep purify happy
-  memset(record1.s, ' ', sizeof(record1.s));
+  //memset(record1.s, ' ', sizeof(record1.s));
 	PageId new_page_number;
   Page new_page = file1->allocatePage(new_page_number);
 
   // Insert a bunch of tuples into the relation.
 	for(int i = 0; i <10; i++ ) 
 	{
-    sprintf(record1.s, "%05d string record", i);
+    //sprintf(record1.s, "%05d string record", i);
     record1.i = i;
-    record1.d = (double)i;
+    //record1.d = (double)i;
     std::string new_data(reinterpret_cast<char*>(&record1), sizeof(record1));
 
 		while(1)
