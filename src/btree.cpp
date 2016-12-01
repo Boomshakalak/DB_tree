@@ -110,8 +110,6 @@ BTreeIndex::~BTreeIndex()
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) 
 {
 	int val = *((int*)(key));
-	RIDKeyPair<int> element ;
-	element.set(rid, val);
 	Page* rpg;
 	bufMgr->readPage(file,rootPageNum,rpg);
 	PageId temp;
@@ -129,8 +127,9 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 		lni->keyArray[0]=val;
 		lni->ridArray[0]=rid;
 		bufMgr->unPinPage(file,pid,true);
+		bufMgr->unPinPage(file,rootPageNum,true);
 	}
-	if (root->k ==INTARRAYNONLEAFSIZE){
+	else if (root->k ==INTARRAYNONLEAFSIZE){
 		Page* newRoot;
 		temp = rootPageNum;
 		bufMgr->allocPage(file,rootPageNum,newRoot);
@@ -139,11 +138,15 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 		nRoot->pageNoArray[0] = temp;
 		splitChildren(nRoot,0);
 		bufMgr->unPinPage(file,temp,true);
+		bufMgr->unPinPage(file,rootPageNum,true);
 		insertNonFull(nRoot,val,rid);
 	}
 	else
-		insertNonFull(root,val,rid);
-	bufMgr->unPinPage(file,rootPageNum,true);
+		{
+			bufMgr->unPinPage(file,rootPageNum,true);
+			insertNonFull(root,val,rid);
+		}
+	
 }
 
 // -----------------------------------------------------------------------------
