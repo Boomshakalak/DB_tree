@@ -20,6 +20,7 @@
 #include "exceptions/scan_not_initialized_exception.h"
 #include "exceptions/end_of_file_exception.h"
 
+
 #define checkPassFail(a, b) 																				\
 {																																		\
 	if(a == b)																												\
@@ -32,6 +33,7 @@
 		std::cout << std::endl;																					\
 		exit(1);																												\
 	}																																	\
+
 }
 
 using namespace badgerdb;
@@ -67,12 +69,16 @@ BufMgr * bufMgr = new BufMgr(100);
 void createRelationForward();
 void createRelationBackward();
 void createRelationRandom();
+void createRelationMassive();
 void intTests();
+void intTests4();
 int intScan(BTreeIndex *index, int lowVal, Operator lowOp, int highVal, Operator highOp);
 void indexTests();
+void indexTests4();
 void test1();
 void test2();
 void test3();
+void test4();
 void errorTests();
 void deleteRelation();
 
@@ -197,7 +203,7 @@ void createRelationForward()
   file1 = new PageFile(relationName, true);
 
   // initialize all of record1.s to keep purify happy
-  memset(record1.s, ' ', sizeof(record1.s));
+  //memset(record1.s, ' ', sizeof(record1.s));
 	PageId new_page_number;
   Page new_page = file1->allocatePage(new_page_number);
 
@@ -244,7 +250,7 @@ void createRelationBackward()
   file1 = new PageFile(relationName, true);
 
   // initialize all of record1.s to keep purify happy
-  memset(record1.s, ' ', sizeof(record1.s));
+  //memset(record1.s, ' ', sizeof(record1.s));
 	PageId new_page_number;
   Page new_page = file1->allocatePage(new_page_number);
 
@@ -292,7 +298,7 @@ void createRelationRandom()
   file1 = new PageFile(relationName, true);
 
   // initialize all of record1.s to keep purify happy
-  memset(record1.s, ' ', sizeof(record1.s));
+  //memset(record1.s, ' ', sizeof(record1.s));
 	PageId new_page_number;
   Page new_page = file1->allocatePage(new_page_number);
 
@@ -360,6 +366,46 @@ void indexTests()
 }
 
 // -----------------------------------------------------------------------------
+
+// indexTests4
+// -----------------------------------------------------------------------------
+
+void indexTests4()
+{
+	if (testNum == 1)
+	{
+		intTests4();
+		try
+		{
+			File::remove(intIndexName);
+		}
+		catch (FileNotFoundException e)
+		{
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+// intTests4
+// -----------------------------------------------------------------------------
+
+void intTests4()
+{
+	std::cout << "Create a B+ Tree index on the integer field" << std::endl;
+	BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple, i), INTEGER);
+
+	// run some tests
+	    checkPassFail(intScan(&index, 25, GT, 40, LT), 14)
+		checkPassFail(intScan(&index, 20, GTE, 35, LTE), 16)
+		checkPassFail(intScan(&index, -3, GT, 3, LT), 3)
+		checkPassFail(intScan(&index, 996, GT, 1001, LT), 4)
+		checkPassFail(intScan(&index, 0, GTE, 1, LTE), 0)
+		checkPassFail(intScan(&index, 300, GT, 400, LT), 99)
+		checkPassFail(intScan(&index, 3000, GTE, 4000, LT), 1000)
+		checkPassFail(intScan(&index, 2, GTE, 9999, LTE), 9998)
+}
+
+// -----------------------------------------------------------------------------
 // intTests
 // -----------------------------------------------------------------------------
 
@@ -413,7 +459,7 @@ int intScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operato
 			if( numResults < 5 )
 			{
 				std::cout << "at:" << scanRid.page_number << "," << scanRid.slot_number;
-				std::cout << " -->:" << myRec.i << ":" << myRec.d << ":" << myRec.s << ":" <<std::endl;
+				std::cout << " -->:" << myRec.i <<std::endl;
 			}
 			else if( numResults == 5 )
 			{
