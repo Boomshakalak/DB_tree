@@ -20,18 +20,16 @@
 #include "exceptions/scan_not_initialized_exception.h"
 #include "exceptions/end_of_file_exception.h"
 
-#define checkPassFail(a, b) 																				
-{																																		
-	if(a == b)																												
-		std::cout << "\nTest passed at line no:" << __LINE__ << "\n";		
-	else																															
-	{																																	
-		std::cout << "\nTest FAILS at line no:" << __LINE__;						
-		std::cout << "\nExpected no of records:" << b;									
-		std::cout << "\nActual no of records found:" << a;							
-		std::cout << std::endl;																					
-		exit(1);																												
-	}																																	
+#define checkPassFail(a, b)\
+{\
+        if(a == b)\
+            std::cout << "\nTest passed at line no:" << __LINE__ << "\n";	\
+	else {																									std::cout << "\nTest FAILS at line no:" << __LINE__;\
+           std::cout << "\nExpected no of records:" << b;\
+           std::cout << "\nActual no of records found:" << a;\
+           std::cout << std::endl;\
+           exit(1);\
+       }\
 }
 
 using namespace badgerdb;
@@ -69,12 +67,16 @@ BufMgr * bufMgr = new BufMgr(100);
 void createRelationForward();
 void createRelationBackward();
 void createRelationRandom();
+void createRelationMassive();
 void intTests();
+void intTests4();
 int intScan(BTreeIndex *index, int lowVal, Operator lowOp, int highVal, Operator highOp);
 void indexTests();
+void indexTests4();
 void test1();
 void test2();
 void test3();
+void test4();
 void errorTests();
 void deleteRelation();
 
@@ -234,7 +236,7 @@ void createRelationForward()
   file1 = new PageFile(relationName, true);
 
   // initialize all of record1.s to keep purify happy
-  memset(record1.s, ' ', sizeof(record1.s));
+  //memset(record1.s, ' ', sizeof(record1.s));
 	PageId new_page_number;
   Page new_page = file1->allocatePage(new_page_number);
 
@@ -281,7 +283,7 @@ void createRelationBackward()
   file1 = new PageFile(relationName, true);
 
   // initialize all of record1.s to keep purify happy
-  memset(record1.s, ' ', sizeof(record1.s));
+  //memset(record1.s, ' ', sizeof(record1.s));
 	PageId new_page_number;
   Page new_page = file1->allocatePage(new_page_number);
 
@@ -329,7 +331,7 @@ void createRelationRandom()
   file1 = new PageFile(relationName, true);
 
   // initialize all of record1.s to keep purify happy
-  memset(record1.s, ' ', sizeof(record1.s));
+  //memset(record1.s, ' ', sizeof(record1.s));
 	PageId new_page_number;
   Page new_page = file1->allocatePage(new_page_number);
 
@@ -468,7 +470,7 @@ void indexTests4()
 // intTests4
 // -----------------------------------------------------------------------------
 
-void intTests()
+void intTests4()
 {
 	std::cout << "Create a B+ Tree index on the integer field" << std::endl;
 	BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple, i), INTEGER);
@@ -538,7 +540,7 @@ int intScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operato
 			if( numResults < 5 )
 			{
 				std::cout << "at:" << scanRid.page_number << "," << scanRid.slot_number;
-				std::cout << " -->:" << myRec.i << ":" << myRec.d << ":" << myRec.s << ":" <<std::endl;
+				std::cout << " -->:" << myRec.i <<std::endl;
 			}
 			else if( numResults == 5 )
 			{
