@@ -182,7 +182,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	if(attributeType == INTEGER) {
 		this->lowValInt = *((int*) lowValParm);
 		this->highValInt = *((int*) highValParm);
-		if(*(int*)lowValParm > *(int)highValParm)
+		if(*(int*)lowValParm > *(int*)highValParm)
 			throw BadScanrangeException();
 
 		//find first leaf
