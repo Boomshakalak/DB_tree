@@ -159,7 +159,7 @@ struct NonLeafNodeInt{
    * Stores page numbers of child pages which themselves are other non-leaf/leaf nodes in the tree.
    */
 	PageId pageNoArray[ INTARRAYNONLEAFSIZE + 1 ];
-  NonLeafNodeInt(): level(0), k(0), keyArray({0}), pageNoArray({0}){};
+  NonLeafNodeInt(): level(0), k(0){};
 };
 
 
@@ -186,7 +186,7 @@ struct LeafNodeInt{
 	 * This linking of leaves allows to easily move from one leaf to the next leaf during index scan.
    */
 	PageId rightSibPageNo;
-  LeafNodeInt():keyArray({0}),k(0),rightSibPageNo(0){};
+  LeafNodeInt():k(0),rightSibPageNo(0){};
 
 };
 
@@ -362,7 +362,8 @@ class BTreeIndex {
 
   /**
 	 * Fetch the record id of the next index entry that matches the scan.
-	 * Return the next record from current page being scanned. If current page has been scanned to its entirety, move on to the right sibling of current page, if any exists, to start scanning that page. Make sure to unpin any pages that are no longer required.
+	 * Return the next record from current page being scanned. If current page has been scanned to its entirety, move on to the right sibling of current page, 
+      if any exists, to start scanning that page. Make sure to unpin any pages that are no longer required.
    * @param outRid	RecordId of next record found that satisfies the scan criteria returned in this
 	 * @throws ScanNotInitializedException If no scan has been initialized.
 	 * @throws IndexScanCompletedException If no more records, satisfying the scan criteria, are left to be scanned.
@@ -375,8 +376,10 @@ class BTreeIndex {
 	 * @throws ScanNotInitializedException If no scan has been initialized.
 	**/
 	const void endScan();
+  
 	void insertNonFull(NonLeafNodeInt* node , int val, RecordId rid);
   void splitChildren(NonLeafNodeInt* node, int c);
+  void printall();
 };
-
+  
 }
