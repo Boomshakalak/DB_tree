@@ -118,15 +118,23 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 		root->k++;
 		Page* nPage;
 		PageId pid;
+		Page* nlPage;
+		PageId lpid;
+		bufMgr->allocPage(file,lpid,nlPage);
 		bufMgr->allocPage(file, pid , nPage);
 		root->keyArray[0]=val;
-		root->pageNoArray[0]=pid;
+		root->pageNoArray[0]=lpid;
+		root->pageNoArray[1]=pid;
 		LeafNodeInt* lni;
+		LeafNodeInt* llni;
+		llni = reinterpret_cast<LeafNodeInt*>(nlPage);
+		llni->k=0;
 		lni = reinterpret_cast<LeafNodeInt*>(nPage);
 		lni->k=1;
 		lni->keyArray[0]=val;
 		lni->ridArray[0]=rid;
 		bufMgr->unPinPage(file,pid,true);
+		bufMgr->unPinPage(file,lpid,true);
 		bufMgr->unPinPage(file,rootPageNum,true);
 	}
 	else if (root->k ==INTARRAYNONLEAFSIZE){
@@ -344,7 +352,7 @@ void BTreeIndex::insertNonFull(NonLeafNodeInt* node , int val, RecordId rid)
 	Page* pg;
 	int pos = node->k-1;
 	if (node->level!=1){
-		for (; pos >= 0 && val < node->keyArray[pos]; pos--){
+		for (; pos > 0 && val < node->keyArray[pos]; pos--){
 		}
 		pos++;
 		bufMgr->readPage(file,node->pageNoArray[pos],pg);
@@ -363,7 +371,7 @@ void BTreeIndex::insertNonFull(NonLeafNodeInt* node , int val, RecordId rid)
 		return;
 	}
 	if (node->level ==1){
-		for (; pos >= 0 && val < node->keyArray[pos]; pos--){
+		for (; pos > 0 && val < node->keyArray[pos]; pos--){
 		}
 		pos++;
 		bufMgr->readPage(file,node->pageNoArray[pos],pg);
