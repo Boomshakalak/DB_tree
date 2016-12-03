@@ -1,0 +1,59 @@
+[33mcommit 22020de4a4bd7bd62ae6a059eb7f7f6c0b3b4e18[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Wed Nov 23 10:16:26 2016 -0600
+
+    modify the size
+
+[33mcommit 36026ef68136201a2a40368efb42e1d3b76f129f[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Mon Nov 21 12:00:17 2016 -0600
+
+    add a memeber variable and a constuctor in node struct
+
+[33mcommit 0899a986f7db691fc28f55cf62cbbe41517f4535[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Sun Nov 20 18:53:47 2016 -0600
+
+    use getfirstpage function to get meta
+
+[33mcommit f8f7b77e9465c996203b7eb6134e201a83919f1a[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Sun Nov 20 15:31:41 2016 -0600
+
+    latest
+
+[33mcommit ec3dc0338038913f607b4695061fc82e5e1cadb6[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Sun Nov 20 14:49:56 2016 -0600
+
+    logic change in constructor
+
+[33mcommit 2ba0a55ab9b472dbf11fd9f6569348b904babff8[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Sun Nov 20 08:42:36 2016 -0600
+
+    update the value pass
+
+[33mcommit 99c5ede82af273c81e6e5f4f583aef7d204b4069[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Sat Nov 19 09:34:11 2016 -0600
+
+    bufmgr alloc
+
+[33mcommit d4bfcaf92cb971508fce56e81bdfa4faf4a4a64e[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Fri Nov 18 17:22:40 2016 -0600
+
+    small change
+
+[33mcommit a91ebe55ff76b862f3423b1c0087f85b2549f3a4[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Fri Nov 18 16:23:01 2016 -0600
+
+    updated btree
+
+[33mcommit 507c2fee3d291a3cbf3fd31f38e0f9c48acef292[m
+Author: Zhongya Wang <zwang895@wisc.edu>
+Date:   Fri Nov 18 10:36:57 2016 -0600
+
+    fisrt commit
