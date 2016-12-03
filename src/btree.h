@@ -376,9 +376,20 @@ class BTreeIndex {
 	 * @throws ScanNotInitializedException If no scan has been initialized.
 	**/
 	const void endScan();
-  
+  /**
+   * insert rid with key value val to the non full node
+   * @if a node is full, recursive call splitChildren and insertNonfull to split a full node and insert deeper
+  **/
 	void insertNonFull(NonLeafNodeInt* node , int val, RecordId rid);
+    /**
+   * when a node if full, split it to 2 half full nodes and modify the parent node
+   * @if node->level ==1 ,we are spliting the leaf node of the parent
+  **/
   void splitChildren(NonLeafNodeInt* node, int c);
+    /**
+   * The method is designed to debugging the tree building
+   * @if the tree is correctly built, the method will print the key from the left-most to the right-most
+  **/
   void printall();
 };
   

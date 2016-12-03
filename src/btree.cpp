@@ -305,7 +305,6 @@ void BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 {
 	Page* curr;
 	Page* subl;
-	PageId temp;
 	PageId pN;
 	int key;
 	bufMgr->allocPage(file,pN,subl);
@@ -340,9 +339,8 @@ void BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 			lNodeR->ridArray[i] = lNodeL->ridArray[i+(INTARRAYLEAFSIZE+1)/2];
 		}	
 		lNodeL->k = (INTARRAYLEAFSIZE+1)/2;
-		temp = lNodeL->rightSibPageNo;
+		lNodeR->rightSibPageNo = lNodeL->rightSibPageNo;
 		lNodeL->rightSibPageNo = pN;
-		lNodeR->rightSibPageNo = temp;
 		// std::cout<<pN<<"new allocpage of--"<< node->pageNoArray[c]<<std::endl;
 		key =  lNodeL->keyArray[lNodeL->k-1];
 	}
