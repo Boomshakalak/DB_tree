@@ -42,7 +42,7 @@ using namespace badgerdb;
 int testNum = 1;
 const std::string relationName = "relA";
 //If the relation size is changed then the second parameter 2 chechPassFail may need to be changed to number of record that are expected to be found during the scan, else tests will erroneously be reported to have failed.
-const int	relationSize = 5000;
+int	relationSize = 5000;
 std::string intIndexName, doubleIndexName, stringIndexName;
 
 // This is the structure for tuples in the base relation
@@ -73,8 +73,15 @@ void indexTests();
 void test1();
 void test2();
 void test3();
+void test4();
+void test5();
+void test6();
 void errorTests();
 void deleteRelation();
+void indexTests3();
+
+void intTests3();
+
 
 int main(int argc, char **argv)
 {
@@ -140,7 +147,11 @@ int main(int argc, char **argv)
 	test1();
 	test2();
 	test3();
-	//errorTests();
+	test4();
+	test5();
+	test6();
+	errorTests();
+	File::remove(intIndexName);
 
   return 1;
 }
@@ -154,6 +165,7 @@ void test1()
 	createRelationForward();
 	indexTests();
 	deleteRelation();
+	std::cout << "============test1 pass===========" << std::endl;
 }
 
 void test2()
@@ -165,6 +177,7 @@ void test2()
 	createRelationBackward();
 	indexTests();
 	deleteRelation();
+	std::cout << "============test2 pass===========" << std::endl;
 }
 
 void test3()
@@ -176,7 +189,92 @@ void test3()
 	createRelationRandom();
 	indexTests();
 	deleteRelation();
+	std::cout << "============test3 pass===========" << std::endl;
+
 }
+
+void test4()
+{
+	// Big Relation Test
+	// Create a relation with tuples valued 0 to relationSize and perform index tests
+	// on attributes of all three types (int, double, string)
+	relationSize = 200000;
+
+	std::cout << "---------------------" << std::endl;
+	std::cout << "createBigRelationForward, this may take a long time" << std::endl;
+
+	createRelationForward();
+	indexTests();
+	deleteRelation();
+
+	std::cout << "---------------------" << std::endl;
+	std::cout << "createBigRelationBackward, this may take a long time" << std::endl;
+	createRelationBackward();
+	indexTests();
+	deleteRelation();
+	std::cout << "============test4 pass===========" << std::endl;
+
+	/*
+	std::cout << "---------------------" << std::endl;
+	std::cout << "createBigRelationRandom" << std::endl;
+	createRelationRandom();
+	indexTests();
+	deleteRelation();
+	*/
+
+	relationSize = 5000;
+}
+
+void test5()
+{
+	// Big Relation Test
+	// Create a relation with tuples valued 0 to relationSize and perform index tests
+	// on attributes of all three types (int, double, string)
+	relationSize = 300000;
+
+	std::cout << "---------------------" << std::endl;
+	std::cout << "createBigRelationForward2, this may take a longer time" << std::endl;
+
+	createRelationForward();
+	indexTests();
+	deleteRelation();
+
+	std::cout << "---------------------" << std::endl;
+	std::cout << "createBigRelationBackward2, this may take a longer time" << std::endl;
+	createRelationBackward();
+	indexTests();
+	deleteRelation();
+	std::cout << "============test5 pass===========" << std::endl;
+
+	/*
+	std::cout << "---------------------" << std::endl;
+	std::cout << "createBigRelationRandom2" << std::endl;
+	createRelationRandom();
+	indexTests();
+	deleteRelation();
+*/
+
+	relationSize = 5000;
+}
+
+void test6() {
+
+	createRelationForward();
+	indexTests3();
+	deleteRelation();
+
+	createRelationBackward();
+	indexTests3();
+	deleteRelation();
+
+	createRelationRandom();
+	indexTests3();
+	deleteRelation();
+	std::cout << "test6 passed" << std::endl;
+}
+
+
+
 
 // -----------------------------------------------------------------------------
 // createRelationForward
@@ -358,6 +456,28 @@ void indexTests()
   	}
   }
 }
+
+void indexTests3() {
+	intTests3();
+	try
+	{
+		File::remove(intIndexName);
+		std::cout<< "delete file complete" << std::endl;
+	}
+	catch(FileNotFoundException e)
+	{std::cout<< "not delete file" << std::endl;
+	}
+
+}
+
+void intTests3() {
+	BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple,i), INTEGER);
+	// run some tests
+	checkPassFail(intScan(&index,-1000, GT, 0, LT), 0)
+	checkPassFail(intScan(&index,5000, GT, 6000, LT), 0)
+	checkPassFail(intScan(&index,4999, GTE, 6000, LTE), 1)
+}
+
 
 // -----------------------------------------------------------------------------
 // intTests
