@@ -76,7 +76,6 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 			{
 			}
 			IndexMetaInfo* meta = reinterpret_cast<IndexMetaInfo*>(metaPage);
-			// meta->relationName = relationName;
 			strcpy(meta->relationName,relationName.c_str());
 			meta->attrByteOffset = attrByteOffset;
 			meta->attrType = attrType;
@@ -131,20 +130,22 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 		lni->keyArray[0]=val;
 		lni->ridArray[0]=rid;
 	}
-	else if (root->k ==INTARRAYNONLEAFSIZE){
+	else if (root->k == INTARRAYNONLEAFSIZE){
 		Page* newRoot;
+		PageId temp;
+		temp = rootPageNum ;
 		bufMgr->allocPage(file,rootPageNum,newRoot);
 		bufMgr->unPinPage(file,rootPageNum,true);
 		NonLeafNodeInt* nRoot = reinterpret_cast<NonLeafNodeInt*>(newRoot);
-		*nRoot=NonLeafNodeInt();
-		splitChildren(nRoot,0);		
+		*nRoot = NonLeafNodeInt();
+		nRoot->pageNoArray[0]= temp;
+		splitChildren(nRoot,0);	
 		insertNonFull(nRoot,val,rid);
 	}
 	else
 		{
 			insertNonFull(root,val,rid);
 		}
-	
 }
 
 // -----------------------------------------------------------------------------
@@ -185,9 +186,8 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			// If current level is not 1, then next page is not leaf page.
 			// Still need to go to next level.
 			pos = 0;
-			while(!(*(int*)lowValParm < nonLeafNode->keyArray[pos]) && pos <nonLeafNode->k)
+			while(!(*(int*)lowValParm <= nonLeafNode->keyArray[pos]) && pos <nonLeafNode->k)
 				pos++;
-			// pos--;
 			PageId nextPageId = nonLeafNode->pageNoArray[pos];
 			bufMgr->readPage(file, nextPageId, currentPageData);
 			bufMgr->unPinPage(file, currentPageNum, false);
@@ -197,7 +197,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 
 		// This page is level 1, which means next page is leaf node.
 		pos = 0;
-		while(!(*(int*)lowValParm < nonLeafNode->keyArray[pos]) &&  pos < nonLeafNode->k)
+		while(!(*(int*)lowValParm <= nonLeafNode->keyArray[pos]) &&  pos < nonLeafNode->k)
 			pos++;
 		PageId nextPageId = nonLeafNode->pageNoArray[pos];
 		bufMgr->readPage(file, nextPageId, currentPageData);
@@ -334,34 +334,33 @@ void BTreeIndex::splitChildren(NonLeafNodeInt* node, int c)
 		// std::cout<<pN<<"new allocpage of--"<< node->pageNoArray[c]<<std::endl;
 		key =  lNodeL->keyArray[lNodeL->k-1];
 	}
-	for (int i = node->k+1; i>c+1; --i)
+	node->k++;
+	for (int i = node->k; i>c+1; --i)
 	{
 		node->pageNoArray[i] = node->pageNoArray[i-1];
 	}
 	node->pageNoArray[c+1] = pN;
-	for (int i = node->k; i > c; --i)
+	for (int i = node->k-1; i > c; --i)
 	{
 		node->keyArray[i] = node->keyArray[i-1];
 	}
 	node->keyArray[c]= key;
-	node->k++;
 }
 void BTreeIndex::printall()
 {
 
 	Page* curPage;
 	NonLeafNodeInt* nln;
-	PageId curPageID = rootPageNum;
-	bufMgr->readPage(file,curPageID,curPage);
-	bufMgr->unPinPage(file,curPageID,false);
+	bufMgr->readPage(file,rootPageNum,curPage);
+	bufMgr->unPinPage(file,rootPageNum,false);
 	nln = reinterpret_cast<NonLeafNodeInt*>(curPage);
 	while(nln->level!=1){
 		bufMgr->readPage(file,nln->pageNoArray[0],curPage);
 		bufMgr->unPinPage(file,nln->pageNoArray[0],false);
 		nln = reinterpret_cast<NonLeafNodeInt*>(curPage);		
 	}
-	bufMgr->readPage(file,nln->pageNoArray[0],curPage);
-	bufMgr->unPinPage(file,nln->pageNoArray[0],false);
+	bufMgr->readPage(file,nln->pageNoArray[1],curPage);
+	bufMgr->unPinPage(file,nln->pageNoArray[1],false);
 	LeafNodeInt* lni;
 	lni = reinterpret_cast<LeafNodeInt*>(curPage);
 	PageId nxtp;
@@ -386,7 +385,7 @@ void BTreeIndex::insertNonFull(NonLeafNodeInt* node , int val, RecordId rid)
 	Page* pg;
 	int pos = node->k-1;
 	if (node->level!=1){
-		for (; pos > 0 && val < node->keyArray[pos]; pos--){
+		for (; pos >= 0 && val < node->keyArray[pos]; pos--){
 		}
 		pos++;
 		bufMgr->readPage(file,node->pageNoArray[pos],pg);
@@ -401,37 +400,35 @@ void BTreeIndex::insertNonFull(NonLeafNodeInt* node , int val, RecordId rid)
 			}
 		}
 		child = reinterpret_cast<NonLeafNodeInt*>(pg);
+
 		insertNonFull(child, val,rid);
-		
-		return;
-	}
-	if (node->level ==1){
-		for (; pos > 0 && val < node->keyArray[pos]; pos--){
 		}
-		pos++;
-		bufMgr->readPage(file,node->pageNoArray[pos],pg);
-		bufMgr->unPinPage(file,node->pageNoArray[pos],true);
-		LeafNodeInt* child = reinterpret_cast<LeafNodeInt*>(pg);
-		if (child->k == INTARRAYLEAFSIZE){
-			splitChildren(node,pos);
-			if (val>node->keyArray[pos]) {
-				pos++;
-				bufMgr->readPage(file,node->pageNoArray[pos],pg);
-				bufMgr->unPinPage(file,node->pageNoArray[pos],true);
+		if (node->level == 1){
+			for (; pos >= 0 && val < node->keyArray[pos]; pos--){
 			}
+			pos++;
+			bufMgr->readPage(file,node->pageNoArray[pos],pg);
+			bufMgr->unPinPage(file,node->pageNoArray[pos],true);
+			LeafNodeInt* child = reinterpret_cast<LeafNodeInt*>(pg);
+			if (child->k == INTARRAYLEAFSIZE){
+				splitChildren(node,pos);
+				if (val>=node->keyArray[pos]) {
+					pos++;
+					bufMgr->readPage(file,node->pageNoArray[pos],pg);
+					bufMgr->unPinPage(file,node->pageNoArray[pos],true);
+				}
+			}
+			child = reinterpret_cast<LeafNodeInt*>(pg);
+			int i;
+			for (i = child->k-1; i >=0 && val<child->keyArray[i]; --i)
+			{
+				child->keyArray[i+1]=child->keyArray[i];
+				child->ridArray[i+1]=child->ridArray[i];
+			}
+			child->keyArray[i+1] = val;
+			child->ridArray[i+1] = rid;
+			child->k++;
 		}
-		child = reinterpret_cast<LeafNodeInt*>(pg);
-		int i;
-		for (i = child->k-1; i >=0 && val<child->keyArray[i]; --i)
-		{
-			child->keyArray[i+1]=child->keyArray[i];
-			child->ridArray[i+1]=child->ridArray[i];
-		}
-		child->keyArray[i+1] = val;
-		child->ridArray[i+1] = rid;
-		child->k++;
-		return;
-	}
 }
 
 }

@@ -147,9 +147,9 @@ int main(int argc, char **argv)
 	test1();
 	test2();
 	test3();
+	test6();
 	test4();
 	test5();
-	test6();
 	errorTests();
 	File::remove(intIndexName);
 
@@ -198,7 +198,7 @@ void test4()
 	// Big Relation Test
 	// Create a relation with tuples valued 0 to relationSize and perform index tests
 	// on attributes of all three types (int, double, string)
-	relationSize = 200000;
+	relationSize = 400000;
 
 	std::cout << "---------------------" << std::endl;
 	std::cout << "createBigRelationForward, this may take a long time" << std::endl;
@@ -230,7 +230,7 @@ void test5()
 	// Big Relation Test
 	// Create a relation with tuples valued 0 to relationSize and perform index tests
 	// on attributes of all three types (int, double, string)
-	relationSize = 300000;
+	relationSize = 600000;
 
 	std::cout << "---------------------" << std::endl;
 	std::cout << "createBigRelationForward2, this may take a longer time" << std::endl;
@@ -487,7 +487,6 @@ void intTests()
 {
   std::cout << "Create a B+ Tree index on the integer field" << std::endl;
   BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple,i), INTEGER);
-
 	// run some tests
 	checkPassFail(intScan(&index,25,GT,40,LT), 14)
 	checkPassFail(intScan(&index,20,GTE,35,LTE), 16)
